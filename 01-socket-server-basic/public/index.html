@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minichat</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+
+<body class="bg-light">
+  <div class="container-fluid h-100">
+    <div class="row justify-content-center h-100">
+      <div class="col-md-8 col-lg-6">
+        <!-- Header del Chat -->
+        <div class="card mt-3 shadow">
+          <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+              <i class="bi bi-chat-dots me-2"></i>
+              Mini Chat
+              <span id="status" class="badge bg-success ms-2">Conectando...</span>
+            </h4>
+          </div>
+          
+          <!-- Área de mensajes -->
+          <div class="card-body" style="height: 400px; overflow-y: auto;" id="mensajes">
+            <div class="d-flex justify-content-center">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Conectando...</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Formulario de envío -->
+          <div class="card-footer">
+            <form id="formulario" class="d-flex gap-2">
+              <input 
+                type="text" 
+                id="mensaje" 
+                class="form-control" 
+                placeholder="Escribe tu mensaje..." 
+                autocomplete="off"
+                required
+              >
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-send"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Panel de información -->
+        <div class="card mt-3 shadow">
+          <div class="card-header">
+            <h6 class="mb-0">
+              <i class="bi bi-info-circle me-2"></i>
+              Información de Conexión
+            </h6>
+          </div>
+          <div class="card-body">
+            <small class="text-muted">
+              Socket ID: <span id="socket-id" class="badge bg-secondary">No conectado</span>
+            </small>
+            <div class="mt-2">
+              <small class="text-muted">Estado: </small>
+              <span id="connection-status" class="badge bg-warning">Conectando...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Socket.io -->
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+  <script>
+    const socket = io('http://localhost:3001', {
+      transports: ['websocket', 'polling'],
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 3000,
+      timeout: 20000
+    });
+
+    //referencias elementos DOM
+    const formulario = document.querySelector('#formulario');
+    const inputMensaje = document.querySelector('#mensaje');
+    const mensajesContainer = document.querySelector('#mensajes');
+    const statusBadge = document.querySelector('#status');
+    const socketIdSpan = document.querySelector('#socket-id');
+    const connectionStatusSpan = document.querySelector('#connection-status');
+
+    // Función para agregar mensajes al chat
+    function agregarMensaje(mensaje, tipo = 'info') {
+      const mensajeDiv = document.createElement('div');
+      mensajeDiv.className = `alert alert-${tipo === 'sent' ? 'primary' : tipo === 'received' ? 'success' : 'info'} alert-dismissible fade show`;
+      mensajeDiv.innerHTML = `
+        <small class="text-muted">${new Date().toLocaleTimeString()}</small><br>
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      mensajesContainer.appendChild(mensajeDiv);
+      mensajesContainer.scrollTop = mensajesContainer.scrollHeight;
+    }
+
+    // Manejar envío de formulario
+    formulario.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const mensaje = inputMensaje.value.trim();
+      if (mensaje) {
+        socket.emit('mensaje', mensaje);
+        agregarMensaje(`Tú: ${mensaje}`, 'sent');
+        inputMensaje.value = '';
+      }
+    });
+
+    // Helpers de log
+    const logOK   = (...args) => console.log('🟢 [CLIENT]', ...args);
+    const logInfo = (...args) => console.log('🔵 [CLIENT]', ...args);
+    const logWarn = (...args) => console.warn('🟠 [CLIENT]', ...args);
+    const logErr  = (...args) => console.error('🔴 [CLIENT]', ...args);
+
+    // 1) Conexión exitosa
+    socket.on('connect', () => {
+      logOK('Conectado ✅ ID:', socket.id);
+      statusBadge.textContent = 'Conectado';
+      statusBadge.className = 'badge bg-success ms-2';
+      socketIdSpan.textContent = socket.id;
+      socketIdSpan.className = 'badge bg-success';
+      connectionStatusSpan.textContent = 'Conectado';
+      connectionStatusSpan.className = 'badge bg-success';
+      
+      // Limpiar el spinner y mostrar mensaje de bienvenida
+      mensajesContainer.innerHTML = '';
+      agregarMensaje('¡Conectado al servidor! 🎉', 'success');
+      
+      socket.emit('mensaje', '👋 Hola desde el cliente!');
+    });
+
+    // 2) Mensajes del servidor
+    socket.on('mensaje', (data) => {
+      logInfo('Mensaje recibido 💬:', data);
+      agregarMensaje(`Servidor: ${data}`, 'received');
+    });
+
+
+
+    // 4) Manejo de errores y reconexión
+    socket.on('connect_error', (err) => {
+      logErr('connect_error:', err.message);
+      statusBadge.textContent = 'Error';
+      statusBadge.className = 'badge bg-danger ms-2';
+      connectionStatusSpan.textContent = 'Error de conexión';
+      connectionStatusSpan.className = 'badge bg-danger';
+      agregarMensaje(`Error de conexión: ${err.message}`, 'danger');
+    });
+    
+    socket.on('reconnect_attempt', (n) => {
+      logWarn('reconnect_attempt:', n);
+      statusBadge.textContent = 'Reconectando...';
+      statusBadge.className = 'badge bg-warning ms-2';
+      connectionStatusSpan.textContent = `Reintentando... (${n})`;
+      connectionStatusSpan.className = 'badge bg-warning';
+    });
+    
+    socket.on('reconnect', (n) => {
+      logOK('reconnect OK intento #', n, '→ nuevo ID:', socket.id);
+      statusBadge.textContent = 'Reconectado';
+      statusBadge.className = 'badge bg-success ms-2';
+      socketIdSpan.textContent = socket.id;
+      connectionStatusSpan.textContent = 'Reconectado';
+      connectionStatusSpan.className = 'badge bg-success';
+      agregarMensaje(`Reconectado exitosamente (intento #${n})`, 'success');
+    });
+    
+    socket.on('reconnect_failed', () => {
+      logErr('reconnect_failed: no se pudo reconectar 😓');
+      statusBadge.textContent = 'Desconectado';
+      statusBadge.className = 'badge bg-danger ms-2';
+      connectionStatusSpan.textContent = 'Falló reconexión';
+      connectionStatusSpan.className = 'badge bg-danger';
+      agregarMensaje('No se pudo reconectar al servidor 😓', 'danger');
+    });
+    
+    socket.on('disconnect', (reason) => {
+      logWarn('disconnect:', reason);
+      statusBadge.textContent = 'Desconectado';
+      statusBadge.className = 'badge bg-warning ms-2';
+      socketIdSpan.textContent = 'No conectado';
+      socketIdSpan.className = 'badge bg-secondary';
+      connectionStatusSpan.textContent = 'Desconectado';
+      connectionStatusSpan.className = 'badge bg-warning';
+      agregarMensaje(`Desconectado: ${reason}`, 'warning');
+    });
+
+    // 5) Emitir un evento personalizado a los 2 segundos
+    setTimeout(() => {
+      socket.emit('mensaje de cliente a servidor', { msg: 'cliente', nombre: 'andres' });
+      logOK('📤 Cliente envió evento personalizado');
+      agregarMensaje('Evento personalizado enviado al servidor', 'info');
+    }, 2000);
+
+    setTimeout(() => {
+      socket.emit('mensaje de cliente a servidor2', { msg:'cliente2', nombre: 'andres2' });
+      logOK('📤 Cliente envió evento personalizado 2');
+      agregarMensaje('Evento personalizado 2 enviado al servidor', 'info');
+    }, 2000);
+
+
+
+
+  </script>
+</body>
+</html>
