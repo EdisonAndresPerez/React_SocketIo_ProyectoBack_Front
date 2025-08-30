@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import BandAdd from './components/BandAdd'
 import BandList from './components/BandList'
 import ServiceStatus from './components/ServiceStatus'
@@ -8,18 +8,13 @@ import useSocket from './hooks/useSocket'
 import type { Band } from './types/Band'
 
 function App() {
-
   const [bands, setBands] = useState<Band[]>([])
-
   // Socket hook - maneja toda la lógica de conexión
   const { socket, isOnline, isConnecting } = useSocket()
 
   // Escuchar eventos del socket
   useEffect(() => {
     if (!socket) return
-
-    socket.emit('get-bandas')
-
 
     // Eventos de bandas desde el servidor
     socket.on('bands-updated', (updatedBands: Band[]) => {
@@ -44,13 +39,22 @@ function App() {
       )
     })
 
+        socket.on('band-edited', (updatedBand: Band) => {
+      console.log('✏️ Banda editada desde servidor:', updatedBand);
+      setBands(prev =>
+        prev.map(b => (b.id === updatedBand.id ? updatedBand : b))
+      );
+    });
+
+
     // Cleanup de listeners
     return () => {
-       socket.off('bandas')
+      socket.off('bandas')
       socket.off('bands-updated')
       socket.off('band-added')
       socket.off('band-deleted')
       socket.off('band-voted')
+      socket.off('band-edited')
     }
   }, [socket])
 
@@ -73,21 +77,10 @@ function App() {
 
   // Funciones de negocio
   const addBand = (name: string) => {
-    const newBand: Band = {
-      id: Date.now().toString(),
-      name,
-      votes: 0,
-      isEditing: false
+   if (socket && isOnline) {
+      socket.emit('add-band', { name });
     }
-
-    // Enviar al servidor
-    if (socket && isOnline) {
-      socket.emit('add-band', newBand)
-    }
-
-    // Actualizar estado local (optimistic update)
-    setBands(prevBands => [...prevBands, newBand])
-  }
+  };
 
   const deleteBand = (id: string) => {
     // Enviar al servidor
@@ -112,6 +105,16 @@ function App() {
       )
     )
   }
+
+  const onEdit = (id: string, name: string) => {
+    if (!socket || !isOnline) return;
+    socket.emit('edit-band', { id, newName: name }, (ack?: { ok: boolean; error?: string }) => {
+      if (ack && !ack.ok) {
+        console.error('Falló edición:', ack.error);
+      }
+    });
+  };
+
 
   return (
     <div className='min-vh-100 bg-light'>
@@ -146,6 +149,7 @@ function App() {
                   bands={bands}
                   onVote={voteBand}
                   onDelete={deleteBand}
+                  onEdit={onEdit}
                 />
               </div>
             </div>

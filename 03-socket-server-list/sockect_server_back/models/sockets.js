@@ -10,7 +10,6 @@ class Sockets {
     // Lista de bandas
     //poder emitir eventos a todos los clientes conectados
     this.bandList = new BandList();
-
     //poder emitir evento de game
     this.GameList = new GameList();
 
@@ -47,27 +46,96 @@ class Sockets {
 
 
       socket.on('get-bandas', () => {
-       this.logMsg(`Cliente ${socket.id} solicita lista de bandas`);
+        this.logMsg(`Cliente ${socket.id} solicita lista de bandas`);
         socket.emit('bandas', this.bandList.getBands());
       });
 
 
       socket.on('add-band', (newBand) => {
         try {
-          this.logBand(`Agregando banda:`, newBand);
+          this.logMsg(`Agregando banda:`, newBand);
 
-          // Agregar banda a la lista (asume que tu BandList tiene método addBand)
-          this.bandList.addBand(newBand.name, newBand.id);
+          // ✅ Agregar sin reemplazar this.bandList
+          this.bandList.addBand(newBand?.name);
 
-          // Notificar a TODOS los clientes
-          this.io.emit('band-added', newBand);
-          this.logBand(`✅ Banda "${newBand.name}" agregada`);
+          // Obtener la banda creada (última en la lista)
+          const bands = this.bandList.getBands();
+          const created = bands[bands.length - 1];
 
+          // Notificar creación puntual
+          this.io.emit('band-added', created);
+
+          // (Opcional) sincronización completa:
+          // this.io.emit('bandas', bands);
+
+          this.logMsg(`✅ Banda "${created?.name}" agregada`);
         } catch (error) {
           this.logErr(`Error agregando banda:`, error);
-          socket.emit('band-error', { action: 'add', error: error.message });
         }
       });
+
+
+      socket.on('delete-band', (bandId) => {
+        try {
+          this.logMsg(`Eliminando banda ID: ${bandId}`);
+
+          this.bandList.removeBand(bandId);
+
+          this.io.emit('band-deleted', bandId);
+          this.logMsg('✅ Banda eliminada')
+
+        } catch (error) {
+          this.logErr(`Error eliminando banda:`, error)
+        }
+      });
+
+      socket.on('vote-band', (bandId) => {
+        try {
+          this.logMsg(`Voto para banda ID: ${bandId} desde ${socket.id}`);
+
+          // Usar tu método existente
+          this.bandList.increaseVotes(bandId);
+
+          // Obtener la banda actualizada para enviarla
+          const bands = this.bandList.getBands();
+          const updatedBand = bands.find(band => band.id === bandId);
+
+          if (updatedBand) {
+            // Notificar a TODOS los clientes
+            this.io.emit('band-voted', updatedBand);
+            this.logMsg(`✅ Voto registrado. Nueva cuenta: ${updatedBand.votes}`);
+          }
+
+        } catch (error) {
+          this.logErr(`Error votando banda:`, error);
+        }
+      });
+
+      socket.on('edit-band', (data) => {
+        try {
+          const { id, newName } = data;
+          this.logMsg(`Editando banda ID: ${id} → "${newName}"`);
+
+          // Usar tu método existente
+          this.bandList.changeName(id, newName);
+
+          // Obtener la banda actualizada
+          const bands = this.bandList.getBands();
+          const updatedBand = bands.find(band => band.id === id);
+
+          if (updatedBand) {
+            // Notificar a TODOS los clientes
+            this.io.emit('band-edited', updatedBand);
+            this.logMsg(`✅ Banda actualizada`);
+          }
+
+        } catch (error) {
+          this.logErr(`Error editando banda:`, error);
+        }
+      });
+
+
+
 
       // ==========================================
       // EVENTOS ORIGINALES DE CHAT (SIN CAMBIOS)
