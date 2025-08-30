@@ -1,48 +1,33 @@
-
-
 // =====================
 // 1) DEPENDENCIAS
 // =====================
-const express = require('express');
-const http    = require('http');
+const express    = require('express');
+const http       = require('http');
 const { Server } = require('socket.io');
-const cors    = require('cors');
-
-const Sockets = require('./sockets')
+const cors       = require('cors');
+const Sockets    = require('./sockets')
 
 // =====================
 // 2) SERVIDOR (CLASE)
 // =====================
 class ServerApp {
-
   constructor() {
-    // --- Configuración base
     this.app = express();
+    this.port = process.env.PORT;
     if (!process.env.PORT){
       throw new Error('Falta la variable de entorno PORT');
     }
 
-    this.port = process.env.PORT;
-
-    // --- HTTP + Socket.IO
     this.server = http.createServer(this.app);
     this.io = new Server(this.server, { cors: { origin: '*' } })
 
-    // --- Estado simple
-    this.state = {
-      connectedCount: 0
-    };
+    this.state = { connectedCount: 0 };
 
-
-    // --- Bootstrap
     this.middleware();
     this.routes();
 
     this.sockets = new Sockets(this.io, this.state)
-
   }
-
-
   // =====================
   // 3) MIDDLEWARES
   // =====================
@@ -50,7 +35,6 @@ class ServerApp {
     this.app.use(cors());
     this.app.use(express.static('public'))
   }
-
   // =====================
   // 4) RUTAS HTTP
   // =====================
@@ -61,30 +45,7 @@ class ServerApp {
   }
 
   // =====================
-  // 6) EVENTOS DE SOCKETS
-  // =====================
-  sockets() {
-    // Helpers de logging locales a este método
-
-    // Conexión entrante
-
-    // Mensaje de bienvenida SOLO al cliente que entra
-
-    // Aviso a los demás que alguien se conectó
-
-    // Escuchar mensajes "normales"
-
-    // 👂 Escuchar el mensaje que enviaste con setTimeout en el cliente
-
-    // Manejo de errores de socket
-
-    // Desconexión
-
-  }
-
-  
-  // =====================
-  // 7) LEVANTAR SERVIDOR
+  // 5) EVENTOS DE SOCKETS
   // =====================
   listen() {
     this.server.listen(this.port, () => {

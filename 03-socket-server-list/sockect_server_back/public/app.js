@@ -23,17 +23,17 @@ socket.on('reconnect_attempt', (n) => {
 
 
 socket.on('reconnect', (n) => {
- console.log(`Reconectado (intento #${n})`);
+  console.log(`Reconectado (intento #${n})`);
 });
 
 socket.on('reconnect_failed', () => {
-console.error('No se pudo reconectar');
+  console.error('No se pudo reconectar');
 });
 
 
 
 socket.on('mensaje', (data) => {
- console.log(`Mensaje recibido: ${data}`);
+  console.log(`Mensaje recibido: ${data}`);
 });
 
 
