@@ -9,7 +9,6 @@ import type { Band } from './types/Band'
 
 function App() {
   const [bands, setBands] = useState<Band[]>([])
-  // Socket hook - maneja toda la lógica de conexión
   const { socket, isOnline, isConnecting } = useSocket()
 
   // Escuchar eventos del socket
@@ -61,12 +60,9 @@ function App() {
   useEffect(() => {
     if (!socket) return
 
-    // 1️⃣ SOLICITAR bandas al servidor
     socket.emit('get-bandas')
 
-    // 2️⃣ ESCUCHAR cuando el servidor envía las bandas
     socket.on('bandas', (bandasFromServer: Band[]) => {
-      console.log('📋 Bandas recibidas:', bandasFromServer)
       setBands(bandasFromServer)
     })
 
@@ -75,7 +71,7 @@ function App() {
     }
   }, [socket])
 
-  // Funciones de negocio
+
   const addBand = (name: string) => {
    if (socket && isOnline) {
       socket.emit('add-band', { name });
@@ -88,7 +84,7 @@ function App() {
       socket.emit('delete-band', id)
     }
 
-    // Actualizar estado local
+
     setBands(prevBands => prevBands.filter(band => band.id !== id))
   }
 

@@ -1,5 +1,4 @@
 const BandList = require('./band-list.js');
-const GameList = require('./game-list.js')
 
 // models/sockets.js
 class Sockets {
@@ -7,11 +6,7 @@ class Sockets {
     this.io = io;
     this.state = state;
 
-    // Lista de bandas
-    //poder emitir eventos a todos los clientes conectados
     this.bandList = new BandList();
-    //poder emitir evento de game
-    this.GameList = new GameList();
 
     this.state.connectedCount ??= 0;
 
@@ -21,7 +16,6 @@ class Sockets {
     this.logDis = (...a) => console.warn('❌ [DESCONECTADO]', ...a);
     this.logErr = (...a) => console.error('🔴 [ERROR]', ...a);
 
-    // En cuanto se construya, ya registra los eventos
     this.registerHandlers();
   }
 
@@ -30,19 +24,7 @@ class Sockets {
       this.state.connectedCount++;
       this.logCon(`ID=${socket.id} | Conectados=${this.state.connectedCount}`);
 
-      //emitir la lista de bandas al conectarse
       socket.emit('bandas', this.bandList.getBands())
-
-      //emitir la lista de juegos al conectarse
-      socket.emit('games', this.GameList.getGame())
-
-      socket.emit('mensaje_bienvenida', '🎉 ¡Bienvenido/a al mini chat!');
-      socket.broadcast.emit('mensaje', `👤 Usuario ${socket.id} se unió al chat`);
-
-
-      // ==========================================
-      // 🆕 EVENTOS DE BANDAS - SINCRONIZADOS CON FRONTEND
-      // ==========================================
 
 
       socket.on('get-bandas', () => {
@@ -54,21 +36,14 @@ class Sockets {
       socket.on('add-band', (newBand) => {
         try {
           this.logMsg(`Agregando banda:`, newBand);
-
-          // ✅ Agregar sin reemplazar this.bandList
           this.bandList.addBand(newBand?.name);
 
-          // Obtener la banda creada (última en la lista)
           const bands = this.bandList.getBands();
           const created = bands[bands.length - 1];
 
-          // Notificar creación puntual
           this.io.emit('band-added', created);
-
-          // (Opcional) sincronización completa:
-          // this.io.emit('bandas', bands);
-
           this.logMsg(`✅ Banda "${created?.name}" agregada`);
+
         } catch (error) {
           this.logErr(`Error agregando banda:`, error);
         }
@@ -92,16 +67,13 @@ class Sockets {
       socket.on('vote-band', (bandId) => {
         try {
           this.logMsg(`Voto para banda ID: ${bandId} desde ${socket.id}`);
-
-          // Usar tu método existente
           this.bandList.increaseVotes(bandId);
 
-          // Obtener la banda actualizada para enviarla
+        
           const bands = this.bandList.getBands();
           const updatedBand = bands.find(band => band.id === bandId);
 
           if (updatedBand) {
-            // Notificar a TODOS los clientes
             this.io.emit('band-voted', updatedBand);
             this.logMsg(`✅ Voto registrado. Nueva cuenta: ${updatedBand.votes}`);
           }
@@ -115,16 +87,13 @@ class Sockets {
         try {
           const { id, newName } = data;
           this.logMsg(`Editando banda ID: ${id} → "${newName}"`);
-
-          // Usar tu método existente
           this.bandList.changeName(id, newName);
 
-          // Obtener la banda actualizada
+      
           const bands = this.bandList.getBands();
           const updatedBand = bands.find(band => band.id === id);
 
           if (updatedBand) {
-            // Notificar a TODOS los clientes
             this.io.emit('band-edited', updatedBand);
             this.logMsg(`✅ Banda actualizada`);
           }
@@ -133,44 +102,7 @@ class Sockets {
           this.logErr(`Error editando banda:`, error);
         }
       });
-
-
-
-
-      // ==========================================
-      // EVENTOS ORIGINALES DE CHAT (SIN CAMBIOS)
-      // ==========================================
-
-
-      socket.on('mensaje', (data) => {
-        const texto = String(data || '').trim();
-        if (!texto) return;
-        this.logMsg(`de ${socket.id}:`, texto);
-        socket.broadcast.emit('mensaje', texto);
-      });
-
-
-
-      socket.on('mensaje de cliente a servidor', (payload) => {
-        this.logMsg(`Evento personalizado de ${socket.id}:`, payload);
-      });
-
-      socket.on('mensaje de cliente a servidor2', (payload) => {
-        this.logMsg(`Evento personalizado 2 de ${socket.id}:`, payload);
-      });
-
-      socket.on('error', (err) => {
-        this.logErr(`Socket ${socket.id} error:`, err?.message || err);
-      });
-
-      socket.on('disconnect', (reason) => {
-        this.state.connectedCount = Math.max(0, this.state.connectedCount - 1);
-        this.logDis(`ID=${socket.id} | Motivo=${reason} | Conectados=${this.state.connectedCount}`);
-        socket.broadcast.emit('mensaje', `🚪 Usuario ${socket.id} salió del chat`);
-      });
     });
-
-    this.logSrv('Sockets inicializados ✅');
   }
 }
 
