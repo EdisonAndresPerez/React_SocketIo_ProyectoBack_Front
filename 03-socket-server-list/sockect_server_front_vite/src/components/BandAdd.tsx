@@ -18,7 +18,6 @@ const BandAdd: React.FC<BandAddProps> = ({ onAddBand }) => {
 
     setIsLoading(true)
 
-    // Simular un pequeño delay para mejor UX
     setTimeout(() => {
       onAddBand(bandName.trim())
       setBandName("")

@@ -1,75 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import BandAdd from './components/BandAdd'
 import BandList from './components/BandList'
 import ServiceStatus from './components/ServiceStatus'
-import useSocket from './hooks/useSocket'
-import type { Band } from './types/Band'
+import { useSocketConnection } from './hooks/useSocketConnection'
 
 function App() {
-  const [bands, setBands] = useState<Band[]>([])
-  const { socket, isOnline, isConnecting } = useSocket()
-
-  // Escuchar eventos del socket
-  useEffect(() => {
-    if (!socket) return
-
-    // Eventos de bandas desde el servidor
-    socket.on('bands-updated', (updatedBands: Band[]) => {
-      console.log('📡 Bandas actualizadas desde servidor:', updatedBands)
-      setBands(updatedBands)
-    })
-
-    socket.on('band-added', (newBand: Band) => {
-      console.log('📡 Nueva banda desde servidor:', newBand)
-      setBands(prevBands => [...prevBands, newBand])
-    })
-
-    socket.on('band-deleted', (deletedBandId: string) => {
-      console.log('📡 Banda eliminada desde servidor:', deletedBandId)
-      setBands(prevBands => prevBands.filter(band => band.id !== deletedBandId))
-    })
-
-    socket.on('band-voted', (updatedBand: Band) => {
-      console.log('📡 Voto recibido desde servidor:', updatedBand)
-      setBands(prevBands =>
-        prevBands.map(band => (band.id === updatedBand.id ? updatedBand : band))
-      )
-    })
-
-        socket.on('band-edited', (updatedBand: Band) => {
-      console.log('✏️ Banda editada desde servidor:', updatedBand);
-      setBands(prev =>
-        prev.map(b => (b.id === updatedBand.id ? updatedBand : b))
-      );
-    });
-
-
-    // Cleanup de listeners
-    return () => {
-      socket.off('bandas')
-      socket.off('bands-updated')
-      socket.off('band-added')
-      socket.off('band-deleted')
-      socket.off('band-voted')
-      socket.off('band-edited')
-    }
-  }, [socket])
-
-  useEffect(() => {
-    if (!socket) return
-
-    socket.emit('get-bandas')
-
-    socket.on('bandas', (bandasFromServer: Band[]) => {
-      setBands(bandasFromServer)
-    })
-
-    return () => {
-      socket.off('bandas')
-    }
-  }, [socket])
+  const { bands, setBands, socket, isOnline, isConnecting  } = useSocketConnection()
 
 
   const addBand = (name: string) => {
@@ -79,7 +16,6 @@ function App() {
   };
 
   const deleteBand = (id: string) => {
-    // Enviar al servidor
     if (socket && isOnline) {
       socket.emit('delete-band', id)
     }
@@ -89,12 +25,11 @@ function App() {
   }
 
   const voteBand = (id: string) => {
-    // Enviar al servidor
     if (socket && isOnline) {
       socket.emit('vote-band', id)
     }
 
-    // Actualizar estado local
+
     setBands(prevBands =>
       prevBands.map(band =>
         band.id === id ? { ...band, votes: band.votes + 1 } : band

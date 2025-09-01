@@ -18,8 +18,6 @@ export const ServiceStatus: React.FC<ServiceStatusProps> = ({
         iconClass: "spinning"
       }
     }
-    
-    // ✅ Aquí faltaba el return para el caso !isConnecting
     return {
       badgeClass: isOnline ? "bg-success" : "bg-danger",
       icon: isOnline ? "bi-wifi" : "bi-wifi-off",
