@@ -6,45 +6,31 @@ import ServiceStatus from './components/ServiceStatus'
 import { useSocketConnection } from './hooks/useSocketConnection'
 
 function App() {
-  const { bands, setBands, socket, isOnline, isConnecting  } = useSocketConnection()
-
+  const { bands, socket, isOnline, isConnecting } =
+    useSocketConnection()
 
   const addBand = (name: string) => {
-   if (socket && isOnline) {
-      socket.emit('add-band', { name });
-    }
-  };
-
-  const deleteBand = (id: string) => {
     if (socket && isOnline) {
-      socket.emit('delete-band', id)
+      socket.emit('add-band', { name })
     }
-
-
-    setBands(prevBands => prevBands.filter(band => band.id !== id))
   }
 
-  const voteBand = (id: string) => {
-    if (socket && isOnline) {
-      socket.emit('vote-band', id)
-    }
+const deleteBand = (id: string) => {
+  if (!socket || !isOnline) return
+  socket.emit('delete-band', id)
+}
 
 
-    setBands(prevBands =>
-      prevBands.map(band =>
-        band.id === id ? { ...band, votes: band.votes + 1 } : band
-      )
-    )
-  }
+const voteBand = (id: string) => {
+  if (!socket || !isOnline) return
+  socket.emit('vote-band', id)
+}
 
-  const onEdit = (id: string, name: string) => {
-    if (!socket || !isOnline) return;
-    socket.emit('edit-band', { id, newName: name }, (ack?: { ok: boolean; error?: string }) => {
-      if (ack && !ack.ok) {
-        console.error('Falló edición:', ack.error);
-      }
-    });
-  };
+
+const onEdit = (id: string, name: string) => {
+  if (!socket || !isOnline) return
+  socket.emit('edit-band', { id, newName: name })
+}
 
 
   return (

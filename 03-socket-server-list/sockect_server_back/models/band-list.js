@@ -5,6 +5,14 @@ class BandList {
   constructor() {
     this.bands = []
   }
+    async loadInitialBands() {
+      const result = await client.query('SELECT * FROM bands');
+      this.bands = result.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        votes: row.votes
+      }));
+    }
 
   addBand(name) {
     if (!name?.trim()) return null;
@@ -20,25 +28,22 @@ class BandList {
     return true;
   }
 
-  async loadInitialBands() {
-    const result = await client.query('SELECT * FROM bands');
-    this.bands = result.rows.map(row => ({
-      id: row.id,
-      name: row.name,
-      votes: row.votes
-    }));
-  }
-
   getBands() {
     return this.bands;
   }
 
-  increaseVotes(id) {
-    const band = this.bands.find(band => band.id === id);
-    if (!band) return null;
-    band.votes += 1;
-    return band;
+async increaseVotes(id) {
+  try {
+    const result = await client.query(
+      'UPDATE bands SET votes = votes + 1 WHERE id = $1 RETURNING *',
+      [id]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error aumentando votos:', error);
+    return null;
   }
+}
 
   changeName(id, newName) {
     if (!newName?.trim()) return null;

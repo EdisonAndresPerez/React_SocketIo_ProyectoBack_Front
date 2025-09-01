@@ -64,22 +64,10 @@ class Sockets {
         }
       });
 
-      socket.on('vote-band', (bandId) => {
-        try {
-          this.logMsg(`Voto para banda ID: ${bandId} desde ${socket.id}`);
-          this.bandList.increaseVotes(bandId);
-
-        
-          const bands = this.bandList.getBands();
-          const updatedBand = bands.find(band => band.id === bandId);
-
-          if (updatedBand) {
-            this.io.emit('band-voted', updatedBand);
-            this.logMsg(`✅ Voto registrado. Nueva cuenta: ${updatedBand.votes}`);
-          }
-
-        } catch (error) {
-          this.logErr(`Error votando banda:`, error);
+      socket.on('vote-band', async (bandId) => {
+        const updatedBand = await this.bandList.increaseVotes(bandId);
+        if (updatedBand) {
+          this.io.emit('band-voted', updatedBand);
         }
       });
 
@@ -89,7 +77,7 @@ class Sockets {
           this.logMsg(`Editando banda ID: ${id} → "${newName}"`);
           this.bandList.changeName(id, newName);
 
-      
+
           const bands = this.bandList.getBands();
           const updatedBand = bands.find(band => band.id === id);
 
