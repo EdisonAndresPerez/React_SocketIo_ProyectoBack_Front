@@ -4,6 +4,7 @@ const http       = require('http');
 const { Server } = require('socket.io');
 const cors       = require('cors');
 const Sockets    = require('./sockets')
+const usuariosRoutes = require('../routes/usuarios.routes')
 
 class ServerApp {
   constructor() {
@@ -29,6 +30,7 @@ class ServerApp {
     this.app.get('/', (_req, res) => {
       res.send('Servidor Socket.IO activo ✅');
     });
+    this.app.use('/api/usuarios', usuariosRoutes);
   }
 
   listen() {

@@ -10,6 +10,10 @@ class BandList {
       new Band("sliknop"),
       new Band("Minecraft"),
       new Band("Minecraft22"),
+      new Band("Minecraft"),
+      new Band("Minecraft22"),
+      new Band("Minecraft"),
+      new Band("Minecraft22"),
     ];
   }
 
