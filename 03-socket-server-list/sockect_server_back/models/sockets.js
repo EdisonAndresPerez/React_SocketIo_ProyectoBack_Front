@@ -33,34 +33,39 @@ class Sockets {
       });
 
 
-      socket.on('add-band', (newBand) => {
+      socket.on('add-band', async (newBand) => {
         try {
           this.logMsg(`Agregando banda:`, newBand);
-          this.bandList.addBand(newBand?.name);
 
-          const bands = this.bandList.getBands();
-          const created = bands[bands.length - 1];
+          const created = await this.bandList.addBand(newBand?.name);
 
-          this.io.emit('band-added', created);
-          this.logMsg(`✅ Banda "${created?.name}" agregada`);
+          if (created) {
+            this.io.emit('band-added', created);
+            this.logMsg(`✅ Banda "${created.name}" agregada`);
+          } else {
+            this.logErr('No se pudo crear la banda');
+          }
 
         } catch (error) {
           this.logErr(`Error agregando banda:`, error);
         }
       });
 
-
-      socket.on('delete-band', (bandId) => {
+      socket.on('delete-band', async (bandId) => {
         try {
           this.logMsg(`Eliminando banda ID: ${bandId}`);
 
-          this.bandList.removeBand(bandId);
+          const success = await this.bandList.removeBand(bandId);
 
-          this.io.emit('band-deleted', bandId);
-          this.logMsg('✅ Banda eliminada')
+          if (success) {
+            this.io.emit('band-deleted', bandId);
+            this.logMsg('✅ Banda eliminada');
+          } else {
+            this.logErr(`No se pudo eliminar la banda con ID: ${bandId}`);
+          }
 
         } catch (error) {
-          this.logErr(`Error eliminando banda:`, error)
+          this.logErr(`Error eliminando banda:`, error);
         }
       });
 
@@ -71,25 +76,25 @@ class Sockets {
         }
       });
 
-      socket.on('edit-band', (data) => {
+      socket.on('edit-band', async (data) => {
         try {
           const { id, newName } = data;
           this.logMsg(`Editando banda ID: ${id} → "${newName}"`);
-          this.bandList.changeName(id, newName);
 
-
-          const bands = this.bandList.getBands();
-          const updatedBand = bands.find(band => band.id === id);
+          const updatedBand = await this.bandList.changeName(id, newName);
 
           if (updatedBand) {
             this.io.emit('band-edited', updatedBand);
             this.logMsg(`✅ Banda actualizada`);
+          } else {
+            this.logErr(`No se pudo actualizar la banda con ID: ${id}`);
           }
 
         } catch (error) {
           this.logErr(`Error editando banda:`, error);
         }
       });
+
     });
   }
 }
