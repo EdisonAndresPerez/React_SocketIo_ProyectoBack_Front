@@ -27,3 +27,4 @@ client.connect((err) => {
   }
 })
 
+module.exports = client;

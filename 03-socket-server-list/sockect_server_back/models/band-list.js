@@ -1,20 +1,9 @@
+const client = require("../database");
 const Band = require("./band");
 
 class BandList {
   constructor() {
-    this.bands = [
-      new Band("Avenged sevenfold"),
-      new Band("Metricas frias"),
-      new Band("breaking benjamin"),
-      new Band("Metallika"),
-      new Band("sliknop"),
-      new Band("Minecraft"),
-      new Band("Minecraft22"),
-      new Band("Minecraft"),
-      new Band("Minecraft22"),
-      new Band("Minecraft"),
-      new Band("Minecraft22"),
-    ];
+    this.bands = []
   }
 
   addBand(name) {
@@ -29,6 +18,15 @@ class BandList {
     if (index === -1) return false;
     this.bands.splice(index, 1);
     return true;
+  }
+
+  async loadInitialBands() {
+    const result = await client.query('SELECT * FROM bands');
+    this.bands = result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      votes: row.votes
+    }));
   }
 
   getBands() {

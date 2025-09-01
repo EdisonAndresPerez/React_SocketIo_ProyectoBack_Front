@@ -1,16 +1,20 @@
 
-const express    = require('express');
-const http       = require('http');
+const express = require('express');
+const http = require('http');
 const { Server } = require('socket.io');
-const cors       = require('cors');
-const Sockets    = require('./sockets')
-const usuariosRoutes = require('../routes/usuarios.routes')
+const cors = require('cors');
+const Sockets = require('./sockets')
+const usuariosRoutes = require('../routes/bandas.routes')
+const BandList = require('./band-list')
+
 
 class ServerApp {
   constructor() {
     this.app = express();
     this.port = process.env.PORT;
     this.server = http.createServer(this.app);
+    this.BandList = new BandList();
+    this.init();
 
     this.io = new Server(this.server, { cors: { origin: '*' } })
 
@@ -24,6 +28,10 @@ class ServerApp {
   middleware() {
     this.app.use(cors());
 
+  }
+  async init() {
+    await this.BandList.loadInitialBands();
+    console.log("🎸 Bandas iniciales cargadas desde la BD:", this.BandList.getBands());
   }
 
   routes() {
