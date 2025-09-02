@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState } from 'react';
-import type { Band } from '../types/Band';
+import type { Band } from '../../types/Band';
 
 interface BandRowProps {
   band: Band;

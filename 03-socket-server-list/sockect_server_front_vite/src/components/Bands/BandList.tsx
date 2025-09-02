@@ -1,6 +1,6 @@
-"use client";
 
-import type { Band } from "../types/Band";
+
+import type { Band } from "../../types/Band";
 import { BandRow } from "./BandRow";
 
 interface BandListProps {
