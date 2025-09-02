@@ -1,14 +1,7 @@
 
-
-import type { Band } from "../../types/Band";
 import { BandRow } from "./BandRow";
+import type { BandListProps } from "../../types/Band";
 
-interface BandListProps {
-  bands: Band[];
-  onVote: (id: string) => void;
-  onDelete: (id: string) => void;
-  onEdit: (id: string, name: string) => void;
-}
 
 const BandList: React.FC<BandListProps> = ({
   bands,

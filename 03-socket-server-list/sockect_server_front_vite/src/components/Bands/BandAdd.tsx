@@ -1,11 +1,9 @@
 "use client"
 
 import type React from "react"
-import { useState} from "react"
+import  { useState} from "react"
+import type  { BandAddProps } from "../../types/Band"
 
-interface BandAddProps {
-  onAddBand: (name: string) => void
-}
 
 const BandAdd: React.FC<BandAddProps> = ({ onAddBand }) => {
   const [bandName, setBandName] = useState("")

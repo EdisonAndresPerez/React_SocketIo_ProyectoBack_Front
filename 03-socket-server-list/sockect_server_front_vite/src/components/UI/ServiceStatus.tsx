@@ -1,9 +1,6 @@
 import type React from "react"
+import type { ServiceStatusProps } from "../../types/Ui"
 
-interface ServiceStatusProps {
-  isOnline: boolean
-  isConnecting?: boolean
-}
 
 export const ServiceStatus: React.FC<ServiceStatusProps> = ({ 
   isOnline, 

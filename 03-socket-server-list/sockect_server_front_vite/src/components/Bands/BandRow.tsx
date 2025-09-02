@@ -1,15 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import type { Band } from '../../types/Band';
+import type { BandRowProps } from '../../types/Band';
 
-interface BandRowProps {
-  band: Band;
-  index: number;
-  onVote: (id: string) => void;
-  onDelete: (id: string) => void;
-  onEdit: (id: string, name: string) => void;
-}
+
 
 export const BandRow: React.FC<BandRowProps> = ({ band, index, onVote, onDelete, onEdit }) => {
   const [isEditing, setIsEditing] = useState(false);
