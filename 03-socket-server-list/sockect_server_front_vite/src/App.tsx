@@ -1,30 +1,22 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { AuthRoutes } from './router/AuthRoutes'
+import {HomeBandas} from './pages/HomeBandas'
 
-import { HomeBandas } from './components/Bands/HomeBandas'
-import AddBands from './components/Bands/AddBands'
-import StatsCards from './components/UI/StatsCards'
-import Navbar from './components/UI/Navbar'
 
 function App() {
 
   return (
-    <div className='min-vh-100 bg-light'>
-      {/* Header */}
-      <Navbar/>
-      {/* Main Content */}
-      <div className='container py-5'>
-        <div className='row g-4'>
-          {/* Band List Section HomeBandas */}
-          <HomeBandas />
-          {/* Add Band Section */}
-          <div className='col-lg-4'>
-            <AddBands />
-            {/* Stats Card */}
-            <StatsCards />
-          </div>
-        </div>
-      </div>
-      <hr />
-    </div>
+    <Routes>
+      {/* Rutas de autenticación */}
+      <Route path="/*" element={<AuthRoutes />} />
+
+      {/* Ruta principal (solo si ya hay login implementado con contexto o JWT) */}
+      <Route path="/home" element={<HomeBandas />} />
+
+      {/* Ruta por defecto */}
+      <Route path="*" element={<Navigate to="/loginPages" />} />
+    </Routes>
+
   )
 }
 

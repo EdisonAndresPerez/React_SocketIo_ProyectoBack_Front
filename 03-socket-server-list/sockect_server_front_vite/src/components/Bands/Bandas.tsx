@@ -4,7 +4,7 @@
 import BandList from './BandList'
 import { useSocketConnection } from '../../hooks/useSocketConnection'
 
-export const HomeBandas = () => {
+export const Bandas = () => {
   const { bands, socket, isOnline } = useSocketConnection()
 
   const deleteBand = (id: string) => {
@@ -44,3 +44,5 @@ export const HomeBandas = () => {
     </div>
   )
 }
+
+export default Bandas
