@@ -1,6 +1,6 @@
 const pool = require('../database')
 const jwt = require('jsonwebtoken')
-
+const bcrypt = require('bcryptjs');
 
 const SECRET_KEY = process.env.JWT_SECRET
 
@@ -11,10 +11,14 @@ const loginUser = async (req, res) => {
     const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
     const user = result.rows[0];
 
-    if (!user || user.password !== password) {
-      return res.status(401).json({ message: 'Credenciales inválidas' });
+    if (!user) {
+      return res.status(401).json({ message: 'Usuario no encontrado' });
     }
 
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Contraseña incorrecta' });
+    }
     const token = jwt.sign(
       { id: user.id, email: user.email },
       SECRET_KEY,

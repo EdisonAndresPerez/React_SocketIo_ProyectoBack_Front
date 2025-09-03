@@ -1,8 +1,54 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom"
 
 
 export const RegisterPages = () => {
+  const [nombre, setNombre] = useState('')
+  const [apellido, setApellido] = useState('')
+  const [email, setEmail] = useState('')
+  const [ password, setPassword] = useState('')
+
+
   const navigate = useNavigate();
+
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+   try {
+    const response = await fetch('http://localhost:3001/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({  nombre, apellido, email, password }),
+    })
+
+    if (!response.ok) {
+      alert('Credenciales inválidas')
+      return
+    }
+
+    const data = await response.json()
+    console.log('Respuesta del servidor:', data)
+
+    // Guarda el token
+    localStorage.setItem('token', data.token)
+
+
+    console.log({ nombre, apellido, email, password });
+
+    // Simulando un registro exitoso y redirigiendo al usuario
+    navigate('/login');
+  } catch (error){
+    console.error('Error en el register', error)
+    alert('hubo un problema al crear la cuenta ')
+  }
+
+  } ;
+
+
+
+
 
   return (
     <div className='container d-flex align-items-center justify-content-center min-vh-100 bg-light'>
@@ -20,7 +66,7 @@ export const RegisterPages = () => {
             Bienvenido, ingresa tus datos para crear una cuenta{' '}
           </p>
         </div>
-        <form>
+        <form onSubmit={handleRegister}>
           <div className='mb-3'>
             <label htmlFor='inputNombre' className='form-label'>
               Nombre Completo
@@ -30,6 +76,8 @@ export const RegisterPages = () => {
               className='form-control'
               id='inputNombre'
               placeholder='Ej: Juan Carlos'
+              value={nombre}
+              onChange={ (e) => setNombre(e.target.value)}
             />
           </div>
           <div className='mb-3'>
@@ -41,6 +89,8 @@ export const RegisterPages = () => {
               className='form-control'
               id='inputApellido'
               placeholder='Ej: Pérez Gómez'
+              value={apellido}
+              onChange={ (e) => setApellido(e.target.value)}
             />
           </div>
           <div className='mb-3'>
@@ -53,6 +103,8 @@ export const RegisterPages = () => {
               id='inputEmail'
               aria-describedby='emailHelp'
               placeholder='usuario@correo.com'
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className='mb-3'>
@@ -64,6 +116,8 @@ export const RegisterPages = () => {
               className='form-control'
               id='inputPassword'
               placeholder='••••••••'
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           <div className='mb-3 form-check'>
