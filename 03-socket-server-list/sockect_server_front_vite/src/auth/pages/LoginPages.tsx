@@ -1,9 +1,44 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom'
 
 
 export const LoginPages = () => {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+
   const navigate = useNavigate();
 
+  const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault() 
+
+  try {
+    const response = await fetch('http://localhost:3001/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    })
+
+    if (!response.ok) {
+      alert('Credenciales inválidas')
+      return
+    }
+
+    const data = await response.json()
+    console.log('Respuesta del servidor:', data)
+
+    // Guarda el token
+    localStorage.setItem('token', data.token)
+
+    // Redirige al home
+    navigate('/home')
+  } catch (error) {
+    console.error('Error en el login:', error)
+    alert('Hubo un problema al iniciar sesión')
+  }
+}
 
 
   return (
@@ -20,7 +55,7 @@ export const LoginPages = () => {
           <h2 className='mt-2 mb-0 fw-bold'>Iniciar Sesión</h2>
           <p className='text-muted mb-0'>Bienvenido, ingresa tus datos</p>
         </div>
-        <form>
+        <form onSubmit={handleLogin}>
           <div className='mb-3'>
             <label htmlFor='exampleInputEmail1' className='form-label'>
               Correo electrónico
@@ -31,6 +66,8 @@ export const LoginPages = () => {
               id='exampleInputEmail1'
               aria-describedby='emailHelp'
               placeholder='usuario@correo.com'
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className='mb-3'>
@@ -42,6 +79,8 @@ export const LoginPages = () => {
               className='form-control'
               id='exampleInputPassword1'
               placeholder='••••••••'
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           <div className='mb-3 form-check'>
@@ -55,7 +94,10 @@ export const LoginPages = () => {
             </label>
           </div>
           <div className='d-flex gap-2'>
-            <button type='submit' className='btn btn-primary w-50'>
+            <button
+             type='submit'
+              className='btn btn-primary w-50'
+            >
               Ingresar
             </button>
             <button
