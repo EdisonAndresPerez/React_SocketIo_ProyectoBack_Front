@@ -19,6 +19,7 @@ console.log('Variables de conexión:', {
   password: process.env.PGPASSWORD ? '****' : 'NO DEFINIDA',
 });
 
+
 client.connect((err) => {
   if (err) {
     console.error('❌ Error conectando a PostgreSQL:', err.stack);
