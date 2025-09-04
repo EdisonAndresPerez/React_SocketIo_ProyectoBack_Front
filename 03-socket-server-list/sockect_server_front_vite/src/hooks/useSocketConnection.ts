@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import type { Game } from '../types/Game' 
 import type { Band } from '../types/Band'
 import useSocket from './useSocket'
 
 export const useSocketConnection = () => {
   const [bands, setBands] = useState<Band[]>([])
+  const [games, setGames] = useState<Game[]>([])
   const { socket, isOnline, isConnecting } = useSocket()
 
 useEffect(() => {
@@ -18,6 +20,20 @@ useEffect(() => {
   }
   fetchBands()
 }, [])
+
+  useEffect(() => {
+    const  fetchGames = async () => {
+      try {
+        const res = await fetch('http://localhost:3001/api/juegos')
+        const data = await res.json()
+        setGames(data)
+      } catch (error) {
+        console.error('Error al obtener los juegos:', error)
+      }
+    }
+    fetchGames()
+}, [])
+
 
 
   useEffect(() => {
@@ -55,5 +71,43 @@ useEffect(() => {
     }
   }, [socket])
 
-  return { bands, setBands, socket, isOnline, isConnecting }
+
+  useEffect( () => {
+ if (!socket) return
+
+    socket.on('get-games', (games: Game[]) => {
+      console.log('📡 Nuevos juegos desde servidor:', games)
+      setGames(games)
+    })
+
+    socket.on('game-deleted', (deletedGameId: string) => {
+      console.log('📡 Juego eliminado desde servidor:', deletedGameId)
+      setGames(prevGames => prevGames.filter(game => game.id !== deletedGameId))
+    })
+
+     socket.on('game-voted', (updatedGame: Game) => {
+    setGames(prevGames =>
+      prevGames.map(game => game.id === updatedGame.id ? updatedGame : game)
+    )
+  })
+
+      socket.on('game-edited', (updatedGame: Game) => {
+      console.log('✏️ Juego editado desde servidor:', updatedGame)
+      setGames(prev =>
+        prev.map(g => (g.id === updatedGame.id ? updatedGame : g))
+      )
+    })
+
+
+  return () => {
+      socket.off('games-updated')
+      socket.off('game-added')
+      socket.off('game-deleted')
+      socket.off('game-voted')
+      socket.off('game-edited')
+    }
+
+  }, [socket])
+
+  return { bands, setBands, games, setGames, socket, isOnline, isConnecting }
 }

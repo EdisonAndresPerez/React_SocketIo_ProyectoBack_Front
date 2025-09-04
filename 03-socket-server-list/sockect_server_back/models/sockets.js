@@ -1,4 +1,5 @@
 const BandList = require('./band-list.js');
+const GameList = require('./game-list.js');
 
 // models/sockets.js
 class Sockets {
@@ -7,6 +8,7 @@ class Sockets {
     this.state = state;
 
     this.bandList = new BandList();
+    this.gameList = new GameList();
 
     this.state.connectedCount ??= 0;
 
@@ -24,9 +26,11 @@ class Sockets {
       this.state.connectedCount++;
       this.logCon(`ID=${socket.id} | Conectados=${this.state.connectedCount}`);
 
-      socket.emit('bandas', this.bandList.getBands())
+      // Enviar listas iniciales
+      socket.emit('bandas', this.bandList.getBands());
+      socket.emit('juegos', this.gameList.getGames());
 
-
+      // === EVENTOS DE BANDAS ===
       socket.on('get-bandas', () => {
         this.logMsg(`Cliente ${socket.id} solicita lista de bandas`);
         socket.emit('bandas', this.bandList.getBands());
@@ -51,6 +55,7 @@ class Sockets {
         }
       });
 
+
       socket.on('delete-band', async (bandId) => {
         try {
           this.logMsg(`Eliminando banda ID: ${bandId}`);
@@ -69,12 +74,14 @@ class Sockets {
         }
       });
 
+
       socket.on('vote-band', async (bandId) => {
         const updatedBand = await this.bandList.increaseVotes(bandId);
         if (updatedBand) {
           this.io.emit('band-voted', updatedBand);
         }
       });
+
 
       socket.on('edit-band', async (data) => {
         try {
@@ -93,6 +100,89 @@ class Sockets {
         } catch (error) {
           this.logErr(`Error editando banda:`, error);
         }
+      });
+
+
+
+
+      // === EVENTOS DE JUEGOS ===
+      socket.on('get-games', () => {
+        this.logMsg(`Cliente ${socket.id} solicita lista de juegos`);
+        socket.emit('juegos', this.gameList.getGames());
+      });
+
+      socket.on('add-game', async (newGame) => {
+        try {
+          this.logMsg(`Agregando juego:`, newGame);
+
+          const created = await this.gameList.addGame(newGame?.nameGame);
+
+          if (created) {
+            this.io.emit('game-added', created);
+            this.logMsg(`✅ Juego "${created.name}" agregado`);
+          } else {
+            this.logErr('No se pudo crear el juego');
+          }
+
+        } catch (error) {
+          this.logErr(`Error agregando juego:`, error);
+        }
+      });
+
+      
+      socket.on('delete-game', async (gameId) => {
+        try {
+          this.logMsg(`Eliminando Juego por ID: ${gameId}`);
+
+          const success = await this.gameList.removeGame(gameId);
+
+          if (success) {
+            this.io.emit('game-deleted', gameId);
+            this.logMsg('✅ Juego eliminado');
+          } else {
+            this.logErr(`No se pudo eliminar el juego con ID: ${gameId}`);
+          }
+
+        } catch (error) {
+          this.logErr(`Error eliminando juego:`, error);
+        }
+      });
+
+      socket.on('vote-game', async (gameId) => {
+        try {
+          const updatedGame = await this.gameList.increasePoints(gameId);
+          if (updatedGame) {
+            this.io.emit('game-voted', updatedGame);
+            this.logMsg(`✅ Voto agregado al juego "${updatedGame.name}"`);
+          }
+        } catch (error) {
+          this.logErr(`Error votando juego:`, error);
+        }
+      });
+
+      socket.on('edit-game', async (data) => {
+        try {
+          const { id, newName } = data;
+          this.logMsg(`Editando juego ID: ${id} → "${newName}"`);
+
+          const updatedGame = await this.gameList.changeNameGame(id, newName);
+
+          if (updatedGame) {
+            this.io.emit('game-edited', updatedGame);
+            this.logMsg(`✅ Juego actualizado`);
+          } else {
+            this.logErr(`No se pudo actualizar el juego con ID: ${id}`);
+          }
+
+        } catch (error) {
+          this.logErr(`Error editando juego:`, error);
+        }
+      });
+
+      // === EVENTO DE DESCONEXIÓN ===
+      socket.on('disconnect', () => {
+        this.state.connectedCount--;
+        this.logDis(`ID=${socket.id} | Conectados=${this.state.connectedCount}`);
       });
 
     });

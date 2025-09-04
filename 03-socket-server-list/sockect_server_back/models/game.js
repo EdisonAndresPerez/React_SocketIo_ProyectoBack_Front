@@ -2,10 +2,9 @@
 const {v4: uuidv4} = require('uuid')
 
 class Game {
-  constructor(player, genre, players){
+  constructor(nameGame, genre, points) {
     this.id = uuidv4();
-    this.player = player;
-    this.players = players;
+    this.nameGame = nameGame;
     this.genre = genre || "desconocido";
     this.points = 0;
   }

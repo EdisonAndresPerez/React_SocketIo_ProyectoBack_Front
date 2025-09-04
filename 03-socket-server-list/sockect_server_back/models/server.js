@@ -4,14 +4,23 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const Sockets = require('./sockets');
 const bandasRoutes = require('../routes/bandas.routes');
+const gamesRoutes = require('../routes/games.routes');
+
+
 const BandList = require('./band-list');
+const GameList = require('./game-list')
+
+
+
 
 class ServerApp {
   constructor() {
     this.app = express();
     this.port = process.env.PORT;
     this.server = http.createServer(this.app);
+    this.GameList = new GameList();
     this.BandList = new BandList();
+
     this.init();
 
     this.io = new Server(this.server, { cors: { origin: '*' } });
@@ -20,7 +29,11 @@ class ServerApp {
 
     this.middleware();
     this.routes();
-    this.sockets = new Sockets(this.io, this.state);
+    this.sockets = new Sockets(this.io, this.state, {
+      BandList: this.BandList,
+      GameList: this.GameList
+    });
+    
   }
 
   middleware() {
@@ -39,6 +52,7 @@ class ServerApp {
     });
 
     this.app.use('/api/bandas', bandasRoutes);
+    this.app.use('/api/games', gamesRoutes);
     this.app.use('/api/auth', require('../routes/auth.routes'));
   }
 
