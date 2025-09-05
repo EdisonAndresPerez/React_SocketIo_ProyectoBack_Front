@@ -29,10 +29,7 @@ class ServerApp {
 
     this.middleware();
     this.routes();
-    this.sockets = new Sockets(this.io, this.state, {
-      BandList: this.BandList,
-      GameList: this.GameList
-    });
+    this.sockets = new Sockets(this.io, this.state);
     
   }
 
@@ -44,6 +41,9 @@ class ServerApp {
   async init() {
     await this.BandList.loadInitialBands();
     console.log("🎸 Bandas iniciales cargadas desde la BD:", this.BandList.getBands());
+    
+    await this.GameList.loadInitialGames();
+    console.log("🎮 Juegos iniciales cargados desde la BD:", this.GameList.getGames());
   }
 
   routes() {

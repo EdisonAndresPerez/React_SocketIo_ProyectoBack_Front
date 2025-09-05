@@ -5,9 +5,9 @@ class Game {
   constructor(nameGame, genre, points) {
     this.id = uuidv4();
     this.nameGame = nameGame;
-    this.genre = genre || "desconocido";
-    this.points = 0;
-  }
+    this.genre = genre ;
+    this.points = points;
+  } 
 }
 
 module.exports = Game;

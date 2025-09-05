@@ -1,15 +1,15 @@
-import {Navbar} from '../components/UI/Navbar'
-import {Bandas} from '../components/Bands/Bandas'
-import {AddBands} from '../components/Bands/AddBands'
-import {StatsCards} from '../components/UI/StatsCards'
-
+import { Navbar } from '../components/UI/Navbar'
+import { Bandas } from '../components/Bands/Bandas'
+import { AddBands } from '../components/Bands/AddBands'
+import { StatsCards } from '../components/UI/StatsCards'
+import { Games } from '../components/Games/Games'
+import { AddGames } from '../components/Games/AddGames'
 
 export const HomeBandas = () => {
   return (
-
     <div className='min-vh-100 bg-light'>
       {/* Header */}
-      <Navbar/>
+      <Navbar />
       {/* Main Content */}
       <div className='container py-5'>
         <div className='row g-4'>
@@ -21,6 +21,15 @@ export const HomeBandas = () => {
             {/* Stats Card */}
             <StatsCards />
           </div>
+           <hr/>
+
+          <Games />
+          <div className='col-lg-4'>
+          <AddGames />
+          </div>
+
+
+
         </div>
       </div>
     </div>

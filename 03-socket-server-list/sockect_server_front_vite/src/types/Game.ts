@@ -1,6 +1,7 @@
 export type Game = {
   id: string,
-  name: string,
+  namegame: string,
+  genre: string,
   points: number,
   isEditing: boolean
 }
@@ -8,19 +9,20 @@ export type Game = {
 
 export type GameEditData = {
   id: string,
-  newName: string
+  newName: string,
+  newGenre: string
 }
 
 
 export interface  GameAddProps {
-  onAddGame: (name: string) => void
+  onAddGame: (namegame: string, genre: string ) => void
 }
 
 export interface GameListProps {
   games: Game[];
   onVote: (id: string) => void;
   onDelete: (id: string) => void;
-  onEdit: (id: string, name: string) => void;
+  onEdit: (data: GameEditData) => void;
 }
 
 export interface GameRowProps {
@@ -28,5 +30,5 @@ export interface GameRowProps {
   index: number;
   onVote: (id: string) => void;
   onDelete: (id: string) => void;
-  onEdit: (id: string, name: string) => void;
+  onEdit: (data: GameEditData) => void;
 }

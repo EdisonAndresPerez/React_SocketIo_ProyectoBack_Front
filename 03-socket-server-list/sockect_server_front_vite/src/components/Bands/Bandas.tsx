@@ -1,6 +1,5 @@
 'use client';
 
-
 import BandList from './BandList'
 import { useSocketConnection } from '../../hooks/useSocketConnection'
 

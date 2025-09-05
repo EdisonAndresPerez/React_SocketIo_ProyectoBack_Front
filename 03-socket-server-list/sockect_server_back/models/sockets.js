@@ -10,6 +10,9 @@ class Sockets {
     this.bandList = new BandList();
     this.gameList = new GameList();
 
+    // Load initial data
+    this.loadInitialData();
+
     this.state.connectedCount ??= 0;
 
     this.logSrv = (...a) => console.log('🚀 [SERVIDOR]', ...a);
@@ -19,6 +22,15 @@ class Sockets {
     this.logErr = (...a) => console.error('🔴 [ERROR]', ...a);
 
     this.registerHandlers();
+  }
+
+  async loadInitialData() {
+    try {
+      await this.bandList.loadInitialBands();
+      await this.gameList.loadInitialGames();
+    } catch (error) {
+      this.logErr('Error cargando datos iniciales:', error);
+    }
   }
 
   registerHandlers() {
@@ -111,15 +123,51 @@ class Sockets {
         socket.emit('juegos', this.gameList.getGames());
       });
 
-      socket.on('add-game', async (newGame) => {
+      socket.on('add-game', async (gameData) => {
         try {
-          this.logMsg(`Agregando juego:`, newGame);
+          this.logMsg(`Agregando juego:`, gameData);
 
-          const created = await this.gameList.addGame(newGame?.nameGame);
+          // Extraer datos según la estructura que llega
+          let gameName, gameGenre;
+          
+          if (gameData?.name && typeof gameData.name === 'object') {
+            // Si name es un objeto: { name: { namegame: '...', genre: '...' } }
+            gameName = gameData.name.namegame || gameData.name.name;
+            gameGenre = gameData.name.genre;
+          } else {
+            // Si es estructura simple: { name: '...', genre: '...' }
+            gameName = gameData?.name || gameData?.namegame || gameData?.nameGame;
+            gameGenre = gameData?.genre;
+          }
+
+          // Debug logging
+          this.logMsg(`Debug - gameName:`, gameName, `(tipo: ${typeof gameName})`);
+          this.logMsg(`Debug - gameGenre:`, gameGenre, `(tipo: ${typeof gameGenre})`);
+
+          if (!gameName || typeof gameName !== 'string') {
+            this.logErr('No se proporcionó nombre válido del juego o no es string');
+            return;
+          }
+
+          if (gameName.trim() === '') {
+            this.logErr('El nombre del juego está vacío');
+            return;
+          }
+
+          if (!gameGenre || typeof gameGenre !== 'string') {
+            this.logMsg('No se proporcionó género válido, usando valor por defecto');
+            gameGenre = 'Sin categoría';
+          }
+
+          if (gameGenre.trim() === '') {
+            gameGenre = 'Sin categoría';
+          }
+
+          const created = await this.gameList.addGame(gameName.trim(), gameGenre.trim());
 
           if (created) {
             this.io.emit('game-added', created);
-            this.logMsg(`✅ Juego "${created.name}" agregado`);
+            this.logMsg(`✅ Juego "${created.namegame}" de categoría "${created.genre}" agregado`);
           } else {
             this.logErr('No se pudo crear el juego');
           }
@@ -153,7 +201,7 @@ class Sockets {
           const updatedGame = await this.gameList.increasePoints(gameId);
           if (updatedGame) {
             this.io.emit('game-voted', updatedGame);
-            this.logMsg(`✅ Voto agregado al juego "${updatedGame.name}"`);
+            this.logMsg(`✅ Voto agregado al juego "${updatedGame.namegame}"`);
           }
         } catch (error) {
           this.logErr(`Error votando juego:`, error);
@@ -162,10 +210,10 @@ class Sockets {
 
       socket.on('edit-game', async (data) => {
         try {
-          const { id, newName } = data;
+          const { id, newName, newGenre } = data;
           this.logMsg(`Editando juego ID: ${id} → "${newName}"`);
 
-          const updatedGame = await this.gameList.changeNameGame(id, newName);
+          const updatedGame = await this.gameList.changeNameGame(id, newName, newGenre || 'Sin categoría');
 
           if (updatedGame) {
             this.io.emit('game-edited', updatedGame);

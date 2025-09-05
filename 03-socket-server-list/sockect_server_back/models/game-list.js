@@ -5,34 +5,38 @@ class GameList {
   constructor() {
     this.games = [];
   }
+
   getGames() {
     return this.games;
   }
-
 
   async loadInitialGames() {
     const result = await client.query('SELECT * FROM games');
     this.games = result.rows.map(row => ({
       id: row.id,
-      nameGame: row.nameGame,
+      namegame: row.namegame, 
       genre: row.genre,
       points: row.points
     }));
   }
 
-
   async addGame(nameGame, genre) {
     try {
       const result = await client.query(
-        'INSERT INTO games (nameGame, genre, points) VALUES ($1, $2, $3) RETURNING *',
-        [nameGame, genre, 0]);
-
-      const newGame = result.rows[0];
+        'INSERT INTO games (namegame, genre, points) VALUES ($1, $2, $3) RETURNING *',
+        [nameGame, genre, 0]
+      );
+      const newGame = {
+        id: result.rows[0].id,
+        namegame: result.rows[0].namegame,
+        genre: result.rows[0].genre,
+        points: result.rows[0].points
+      };
       this.games.push(newGame);
       return newGame;
     } catch (error) {
-      console.error('Error adding game:', error);
-      throw error;
+      console.error('Error agregando juego:', error);
+      return null;
     }
   }
 
@@ -45,7 +49,6 @@ class GameList {
       return false;
     }
   }
-
 
   async increasePoints(id) {
     try {
@@ -60,20 +63,18 @@ class GameList {
     }
   }
 
-  async changeNameGame(id, newNameGame) {
-    if (!newNameGame.trim()) return null
+  async changeNameGame(id, newNameGame, newGenre) {
     try {
       const result = await client.query(
-        'UPDATE games SET nameGame = $1 WHERE id = $2 RETURNING *',
-        [newNameGame, id]
+        'UPDATE games SET namegame = $1, genre = $2 WHERE id = $3 RETURNING *',
+        [newNameGame, newGenre, id]
       );
       return result.rows[0];
     } catch (error) {
-      console.error("error al cambiar el nombre del juego", error);
+      console.error("error al cambiar el nombre del juego y la categoría", error);
       return null;
     }
   }
-
 }
 
 module.exports = GameList;

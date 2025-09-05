@@ -1,5 +1,7 @@
 const bd = require('../database');
 
+
+
 const obtenerJuegos = async (_req, res)  => {
   try {
     const resultado = await bd.query('SELECT * FROM games');
